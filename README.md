@@ -1,12 +1,4 @@
-Below is the updated `README.md` file with the new rate limit details explicitly incorporated for all versions (v1, v2, and v3) based on the provided test results:
-
-- v1: Max requests allowed per minute: 100, Block duration: 41 seconds (40567 ms)
-- v2: Max requests allowed per minute: 50, Block duration: 51 seconds (50780 ms)
-- v3: Max requests allowed per minute: 80, Block duration: 45 seconds (45355 ms)
-
-The changes are applied in the "⚠ API Limitations" section and the "⏳ Rate Limiting Handling" section to reflect the updated findings while maintaining the original style and structure.
-
----
+--
 
 # 🌐 API Autocomplete System Exploration - v1, v2, and v3 Endpoints
 
@@ -29,19 +21,55 @@ This repository contains my solution for extracting all possible names from the 
 
 - **v1 Response**: JSON with a `results` array, max 10 results per query.
   ```json
-  {"version": "v1", "count": 10, "results": ["aa", "aabdknlvkc", "aabrkcd", "aadgdqrwdy", "aagqg", "aaiha", "aainmxg", "aajfebume", "aajwv", "aakfubvxv"]}
+  {"version": "v1", "count": 10, "results": [
+        "aa",
+        "aabdknlvkc",
+        "aabrkcd",
+        "aadgdqrwdy",
+        "aagqg",
+        "aaiha",
+        "aainmxg",
+        "aajfebume",
+        "aajwv",
+        "aakfubvxv"
+    ]}
   ```
 - **v2 Response**: JSON with a `results` array, max 12 results per query.
   ```json
-  {"version": "v2", "count": 12, "results": ["abc", "abcd", "abce", "abcf", "abcg", "abch", "abci", "abcj", "abck", "abcl", "abcm", "abcn"]}
+  {"version": "v2", "count": 12, "results": [
+        "00981o7oyy",
+        "00muuu8",
+        "00o1z8b2t5",
+        "00tfan4",
+        "00us291vs",
+        "00vhuwj9",
+        "01",
+        "010uj5",
+        "013a6",
+        "01485vptaz",
+        "01iq",
+        "01s0hi6"
+    ]}
   ```
 - **v3 Response**: JSON with a `results` array, max 15 results per query, supports additional characters (space, `+`, `-`, `.`).
   ```json
-  {"version": "v3", "count": 15, "results": ["abc", "abc ", "abc+", "abc-", "abc.", "abcd", "abce", "abcf", "abcg", "abch", "abci", "abcj", "abck", "abcl", "abcm"]}
-  ```
-- **Empty Response** (all versions): 
-  ```json
-  {"version": "vx", "count": 0, "results": []}
+  {"version": "v3", "count": 15, "results": [
+        "0",
+        "0 .r m1",
+        "0 3",
+        "0 4",
+        "0 c.xcr+",
+        "0 u",
+        "0 v-v8gq",
+        "0+22l2p8",
+        "0+d",
+        "0+e3ldrq",
+        "0+h6i48r1j",
+        "0+k94tv048",
+        "0+qcv-mazy",
+        "0+qy",
+        "0+yg39.ujr"
+    ]}
   ```
 
 ### ⚠ API Limitations
@@ -54,6 +82,133 @@ This repository contains my solution for extracting all possible names from the 
   - v1: 10 results per query
   - v2: 12 results per query
   - v3: 15 results per query
+
+## 🔬 Detailed API Findings
+
+This section provides an in-depth analysis of the data and behavior observed across the three API versions.
+
+### v1 Findings
+- **Character Set**: Only small alphabets (a-z).
+- **Data Characteristics**:
+  - All results consist of lowercase letters with varying lengths.
+  - Results are arranged lexicographically based on the query prefix.
+  - Example: Query `a` returns names like `aa`, `aabdknlvkc`, `aabrkcd`, etc., all starting with `a` and sorted alphabetically.
+- **Behavior**:
+  - The API consistently returns up to 10 results for any valid prefix.
+  - When fewer than 10 results are returned, it indicates the end of available matches for that prefix.
+  - No support for numbers or special characters.
+
+### v2 Findings
+- **Character Set**: Small alphabets (a-z) and numbers (0-9).
+- **Data Characteristics**:
+  - Results include combinations of letters and numbers.
+  - Names can start with numbers (e.g., `00981o7oyy`) or letters (e.g., `abc123`), and they vary in length.
+  - Results are lexicographically sorted based on the query, treating numbers and letters as part of the string.
+  - Example: Query `00` returns `00981o7oyy`, `00muuu8`, `00o1z8b2t5`, etc.
+- **Behavior**:
+  - Returns up to 12 results per query.
+  - Supports a broader dataset than v1 by including numeric characters, but no special symbols.
+  - Recursion stops when fewer than 12 results are returned, indicating all matches are exhausted.
+
+### v3 Findings
+- **Character Set**: Small alphabets (a-z), numbers (0-9), and four special symbols: space (` `), plus (`+`), hyphen (`-`), and dot (`.`).
+- **Data Characteristics**:
+  - Results include combinations of letters, numbers, and the supported symbols.
+  - Names can contain multiple instances of symbols (e.g., `0 .r m1`, `0+qcv-mazy`).
+  - Lexicographical ordering applies, but symbol handling affects query behavior (see issues below).
+  - Example: Query `0` returns `0`, `0 3`, `0+22l2p8`, `0 v-v8gq`, etc.
+- **Behavior**:
+  - Returns up to 15 results per query.
+  - Supports the most complex dataset with special characters.
+
+#### Special Symbol Query Issues (v3)
+The v3 endpoint’s handling of special symbols (`+` and space) reveals quirks that require specific workarounds. Below are the detailed findings with examples:
+
+- **Plus (`+`) Behavior**:
+  - **Unencoded Query (`a+`)**:
+    - Query: `?query=a+`
+    - Response:
+      ```json
+      [
+          "a",
+          "a e+skbrns",
+          "a ifs1.-",
+          "a+woz7",
+          "a-.",
+          "a-g z",
+          "a-m.ffwo",
+          "a-o80",
+          "a.",
+          "a.-gowx3d",
+          "a..rmw83",
+          "a.1kh g",
+          "a.2xf",
+          "a.c",
+          "a.gi3m"
+      ]
+      ```
+    - **Observation**: Returns 15 results identical to `?query=a`. The `+` is ignored or misinterpreted, failing to filter for results starting with `a+`. Only `a+woz7` starts with `a+`, while others have different prefixes.
+  - **Encoded Query (`a%2B`)**:
+    - Query: `?query=a%2B`
+    - Response:
+      ```json
+      [
+          "a+woz7"
+      ]
+      ```
+    - **Observation**: Correctly filters to results starting with `a+`. Only one match exists in this case.
+  - **Explanation**: The unencoded `+` is likely treated as a separator (common in URL query strings) rather than a literal character, causing the API to ignore it for filtering. Encoding as `%2B` ensures it’s interpreted as a literal `+`.
+  - **Resolution**: Use `%2B` in queries to enforce proper filtering for results starting with `+`.
+
+- **Space (` `) Behavior**:
+  - **Unencoded Query (`a `)**:
+    - Query: `?query=a `
+    - Response:
+      ```json
+      [
+          "a",
+          "a e+skbrns",
+          "a ifs1.-",
+          "a+woz7",
+          "a-.",
+          "a-g z",
+          "a-m.ffwo",
+          "a-o80",
+          "a.",
+          "a.-gowx3d",
+          "a..rmw83",
+          "a.1kh g",
+          "a.2xf",
+          "a.c",
+          "a.gi3m"
+      ]
+      ```
+    - **Observation**: Identical to `?query=a`. The space doesn’t filter or prioritize space-containing words.
+  - **Encoded Query (`a%20`)**:
+    - Query: `?query=a%20`
+    - Response:
+      ```json
+      [
+          "a",
+          "a e+skbrns",
+          "a ifs1.-",
+          "a+woz7",
+          "a-.",
+          "a-g z",
+          "a-m.ffwo",
+          "a-o80",
+          "a.",
+          "a.-gowx3d",
+          "a..rmw83",
+          "a.1kh g",
+          "a.2xf",
+          "a.c",
+          "a.gi3m"
+      ]
+      ```
+    - **Observation**: Same as `?query=a` and `?query=a `. The `%20` has no effect on filtering.
+  - **Explanation**: The API ignores trailing spaces (whether ` ` or `%20`), treating the query as if the space wasn’t present. It doesn’t filter for space-containing words or adjust the result order.
+  - **Resolution**: Manually filter the response for words with spaces (e.g., `a e+skbrns`, `a-g z`, `a.1kh g`) and stop recursion after one iteration to avoid redundant exploration.
 
 ## 🗺 Approach
 
@@ -96,23 +251,34 @@ All approaches ensure complete coverage while respecting rate limits using delay
 
 ## 📈 Results
 
-- **v1 Total Unique Names**: [To be filled after complete run]
-- **v2 Total Unique Names**: [To be filled after complete run]
-- **v3 Total Unique Names**: [To be filled after complete run]
-- **Total API Requests**: [To be filled after complete run]
-- **Execution Time**: [To be filled after complete run]
+Here are the outcomes of the extraction process for each API version, detailing the total unique names collected, API requests made, and execution times:
+
+- **v1 Results**  
+  - **🔢 Total Unique Names**: 18,632  
+  - **🌐 Total API Requests**: 31,189  
+  - **⏱ Execution Time**: 6 hr 13 min  
+
+- **v2 Results**  
+  - **🔢 Total Unique Names**: 13,730  
+  - **🌐 Total API Requests**: 7,417  
+  - **⏱ Execution Time**: 2 hr 35 min  
+
+- **v3 Results**  
+  - **🔢 Total Unique Names**: 11,622  
+  - **🌐 Total API Requests**: 3,468  
+  - **⏱ Execution Time**: 1 hr 2 min  
 
 ## 🗂 Code Structure
 
-- **v1**: `index.js`
+- **v1**: `extractNamesV1.js`
   - `enforceRateLimit()`: Manages request pacing
   - `fetchSuggestions()`: API calls with error handling
   - `testPrefix()`: Tests prefix viability
   - `extractAllNames()`: Main extraction logic
-- **v2**: `index_v2.js`
+- **v2**: `extractNamesV2.js`
   - `sleep()`: Delay utility
   - `getAutocomplete()`: Recursive extraction with rate limit handling
-- **v3**: `index_v3.js`
+- **v3**: `extractNamesV3.js`
   - `sleep()`: Delay utility
   - `getAutocomplete()`: Recursive extraction with extended character support
 
@@ -123,13 +289,13 @@ All approaches ensure complete coverage while respecting rate limits using delay
 npm install
 
 # Run v1 extraction
-node index.js
+node extractNamesV1.js
 
 # Run v2 extraction
-node index_v2.js
+node extractNamesV2.js
 
 # Run v3 extraction
-node index_v3.js
+node extractNamesV3.js
 ```
 
 The v2 and v3 scripts log progress and save results to `words.txt`. v1 supports resumption from saved progress.
@@ -139,23 +305,12 @@ The v2 and v3 scripts log progress and save results to `words.txt`. v1 supports 
 - Add parallel processing for non-rate-limited environments.
 - Improve memory efficiency for large datasets.
 - Unify v1, v2, and v3 logic into a configurable script.
-- Add progress persistence for v2 and v3 similar to v1.
+- Implement a web interface for interactive exploration.
+
 
 ---
 
 This documentation provides a comprehensive overview of the exploration process, API behaviors, implementation details, and future improvements. The solution efficiently extracts all possible names from the autocomplete API while respecting rate limits and endpoint-specific constraints. The code structure and execution steps are clearly outlined for easy understanding and replication.
 
 ---
-
-### Key Changes Made:
-1. **API Limitations Section**:
-   - Updated v1 rate limit to 100 requests/min with a 41-second block duration.
-   - Updated v2 rate limit to 50 requests/min with a 51-second block duration.
-   - Updated v3 rate limit to 80 requests/min with a 45-second block duration.
-2. **Rate Limiting Handling Section**:
-   - Adjusted v1 to reflect a 41-second wait on 429 responses.
-   - Adjusted v2 to use a 1200ms delay (60,000 ms / 50 requests = 1200 ms/request) and a 51-second wait on 429 errors.
-   - Adjusted v3 to use a 750ms delay (60,000 ms / 80 requests = 750 ms/request) and a 45-second wait on 429 errors.
-
-These changes ensure that the README.md file accurately reflects the updated rate limits and block durations for all versions of the API, providing clear and precise information for users and developers.
 
